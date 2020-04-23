@@ -182,10 +182,8 @@ namespace family
             else if(relat.find("father") != string::npos)
             {
                 string str = findH(count, this, 0);
-                cout << "str " << str << endl;
                 if (str == "NULL")
                 {
-                    cout << "if- i'm here "<< endl;
                     throw runtime_error("that relation doesn't exist!");
                 }
                 return str;
