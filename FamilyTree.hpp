@@ -1,32 +1,43 @@
 #include <iostream>
+#include <string>
 using namespace std;
-
-struct node
-{
-    string name;
-    node *left;
-    node *right;
-    node *prev;
-};
 
 namespace family
 {
     class Tree
     {
+        string name;
+        Tree* mother;
+        Tree* father;
+        Tree* kid;
+
         public:
 
-        Tree(string name);
-        
-        node *search(string name, node *leaf);
-        Tree& addFather(string kid, string father);
-        Tree& addMother(string kid, string mother);
-        string relation(string name);
-        string find(string relat);
-        void printBT(const string& prefix, const node* node, bool isLeft);
-        void display();
-        void remove(string name);
-        void delete_tree(node *leaf);
+        Tree(string nameR)
+        {
+            name = nameR;
+            mother = NULL;
+            father = NULL;
+            kid = NULL;
+        }
 
-        struct node *root;
+        ~Tree()
+        {
+            delete this->father;
+            delete this->mother;
+        }
+        
+        Tree& addFather(string, string);
+        Tree& addMother(string, string);
+        string relation(string);
+        string find(string);
+        void display();
+        void remove(string);
+
+        private:
+
+        Tree* search(string, Tree*);
+        void printBT(const string& prefix, Tree* node, bool isLeft);
+        string findH(int, Tree*, int);
     };
 };

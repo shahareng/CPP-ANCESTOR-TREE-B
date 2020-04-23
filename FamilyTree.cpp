@@ -3,54 +3,37 @@
 #include <iostream>
 using namespace std;
 
-string relation[] = {"", "grand", "great-grand"};
 
 namespace family
 {
-
-    Tree::Tree(string name)
-    {
-        root = new node;
-        root->name = name;
-        root->left = NULL;
-        root->right = NULL;
-        root->prev = NULL;
-    }
-
     // search a name in the tree
-    node *Tree::search(string name, node *leaf)
+    Tree* Tree::search(string name, Tree* node)
     {
-        if(leaf != NULL)
-        {
-            if(leaf->name.compare(name) == 0)
-            {
-                return leaf;
-            }
-            search(name, leaf->left);
-            search(name, leaf->right);
-        }
+        if(node == NULL) return NULL;
+        if(node->name == name) return node;
+        Tree* treeFather = search(name, node->father);
+        Tree* treeMother = search(name, node->mother);
+        if(treeFather != NULL) return treeFather;
+        if(treeMother != NULL) return treeMother;
         return NULL;
     }
     
     // add father to someone that apear in the tree
     Tree& Tree::addFather(string kid, string father)
     {
-        node * leaf = search(kid, root);
+        Tree* leaf = search(kid, this);
         if (leaf == NULL)
         {
             throw runtime_error("that name doesn't exist!");
         }
-        else if (leaf->left != NULL)
+        else if (leaf->father != NULL)
         {
             throw runtime_error("she/he had a father yet!");
         }
         else
         {
-            leaf->left = new node;
-            leaf->left->name = father;
-            leaf->left->left = NULL; 
-            leaf->left->right = NULL;
-            leaf->left->prev = leaf;
+            leaf->father = new Tree(father);
+            leaf->father->kid = leaf;
         }
         return *this;
     }
@@ -58,22 +41,19 @@ namespace family
     // add mother to someone that apear in the tree
     Tree& Tree::addMother(string kid, string mother)
     {
-        node * leaf = search(kid, root);
+        Tree* leaf = search(kid, this);
         if (leaf == NULL)
         {
             throw runtime_error("that name doesn't exist!");
         }
-        else if (leaf->right != NULL)
+        else if (leaf->mother != NULL)
         {
             throw runtime_error("she/he had a mother yet!");
         }
         else
         {
-            leaf->right = new node;
-            leaf->right->name = mother;
-            leaf->right->left = NULL; 
-            leaf->right->right = NULL;
-            leaf->right->prev = leaf;
+            leaf->mother = new Tree(mother);
+            leaf->mother->kid = leaf;
         }
         return *this;   
     }
@@ -81,106 +61,139 @@ namespace family
     // return the relation in the tree ; e.g: mothre, father, unrelated and more..
     string Tree::relation(string name)
     {
-        node * leaf = search(name, root);
-        node * ans = *leaf;
+        Tree* leaf = search(name, this);
+        Tree* ans = leaf;
         if(leaf == NULL)
         {
             return "unrelated";
         }
-        if(leaf == root)
+        if(leaf == this)
         {
             return "me";
         }
-        int count;
+        int count = 0;
         string rela = "";
-        while (prev != root)
+        string relation[] = {"", "grand", "great-grand"};
+        while (leaf != this)
         {
             count++;
-            leaf = leaf->prev;
+            leaf = leaf->kid;
         }
         while(count>3)
         {
             rela+="great-";
             count--;
         }
-        ans = ans->prev;
-        if(ans->left->name.compare(name) == 0)
+        ans = ans->kid;
+        if(ans->father->name.compare(name) == 0)
         {
             rela+=relation[count-1];
             return rela+="father";
         }
-        else if(ans->right->name.compare(name) == 0)
+        else if(ans->mother->name.compare(name) == 0)
         {
-            rela+=relation[count];
+            rela+=relation[count-1];
             return rela+="mother";
         }
+        return NULL;
+    }
+
+    string Tree::findH(int count, Tree* leaf, int type)
+    {
+        if(leaf == NULL) return "NULL";
+        if(count == 1)
+        {
+            if(type==1 && leaf->mother != NULL)
+            {
+                return leaf->mother->name;
+            }
+            else if(type==0 && leaf->father != NULL)
+            {
+                return leaf->father->name;
+            }
+            else return "NULL";
+        }
+        string treeFather = findH(count-1, leaf->father, type);
+        string treeMother = findH(count-1, leaf->mother, type);
+        if(treeMother.compare("NULL"))
+            return treeMother;
+        return treeFather;
     }
 
     // return the name of the relation
     string Tree::find(string relat)
     {
-        if(relat.compare("me"))
+        if(relat.compare("me") == 0)
         {
-            return root->name;
+            return this->name;
         }
-        else if(relat.compare("father"))
+        else if(relat.compare("father") == 0 )
         {
-            return root->left->name;
-        }
-        else if(relat.compare("mother"))
-        {
-            return root->right->name;
-        }
-        else if(relat.find("grand") == 0)
-        {
-            if(relat.find("mother") != string::npos)
+            if(this->father != NULL)
             {
-                if(root->left->right->name != NULL)
-                    return root->left->right->name;
-                else if(root->right->right->name != NULL)
-                    return root->right->right->name;
-                else throw runtime_error("that relation doesn't exist!");
+                return this->father->name;
             }
-            else if(relat.find("father") != string::npos)
+            throw runtime_error("that relation doesn't exist!");
+        }
+        else if(relat.compare("mother") == 0)
+        {
+            if(this->mother != NULL)
             {
-                if(root->left->left->name != NULL)
-                    return root->left->right->name;
-                else if(root->right->left->name != NULL)
-                    return root->right->right->name;
-                else throw runtime_error("that relation doesn't exist!");
+                return this->mother->name;
             }
+            throw runtime_error("that relation doesn't exist!");
+        }
+        else if(relat.compare("grandmother") == 0)
+        {
+            if(this->father != NULL && this->father->mother != NULL)
+                return this->father->mother->name;
+            else if(this->mother != NULL && this->mother->mother != NULL)
+                return this->mother->mother->name;
+            else throw runtime_error("that relation doesn't exist!");
+        }
+        else if(relat.compare("grandfather") == 0)
+        {
+            if(this->father != NULL && this->father->father != NULL)
+                return this->father->father->name;
+            else if(this->mother != NULL && this->mother->father != NULL)
+                return this->mother->father->name;
+            else throw runtime_error("that relation doesn't exist!");
         }
         else if(relat.find("great-") == 0)
         {
             size_t found = relat.find("great-");
             int count=2;
-            node * leaf = root;
-            found = str.find("great-",found+1,6);
+            Tree* leaf = this;
+            found = relat.find("great-",found+1,6);
             while(found != string::npos)
             {
                 count++;
+                found = relat.find("great-",found+1,6);
             }
             if(relat.find("mother") != string::npos)
             {
-                while(count>0)
+                string str = findH(count, this, 1);
+                if (str == "NULL")
                 {
-                    leaf = leaf->left;
+                    throw runtime_error("that relation doesn't exist!");
                 }
-                return leaf->right->name;
+                return str;
             }
             else if(relat.find("father") != string::npos)
             {
-                while(count>0)
+                string str = findH(count, this, 0);
+                if (str == "NULL")
                 {
-                    leaf = leaf->left;
+                    throw runtime_error("that relation doesn't exist!");
                 }
-                return leaf->left->name;
+                return str;
             }
         }
         else throw runtime_error("that relation doesn't exist!");
+        return NULL;
     }
 
-    void Tree::printBT(const string& prefix, const node* node, bool isLeft)
+    void Tree::printBT(const string& prefix, Tree* node, bool isLeft)
     {
         if(node != NULL)
         {
@@ -192,43 +205,44 @@ namespace family
             cout << node->name << endl;
 
             // enter the next tree level - left and right branch
-            printBT(prefix + (isLeft ? "│   " : "    "), node->left, true);
-            printBT(prefix + (isLeft ? "│   " : "    "), node->right, false);
+            printBT(prefix + (isLeft ? "│   " : "    "), node->father, true);
+            printBT(prefix + (isLeft ? "│   " : "    "), node->mother, false);
         }
     }
 
     // display the tree
     void Tree::display()
     {
-        printBT("", root, false);
+        printBT("", this, false);
     }
 
     // delete the name and all his parents from the tree
     void Tree::remove(string name)
     {
-        node * leaf = search(name, root);
+        Tree* leaf = search(name, this);
         if(leaf == NULL)
         {
             throw runtime_error("that name doesn't exist!");
         }
-        else if(leaf->name.compare(root->name) == 0)
+        else if(leaf->name.compare(this->name) == 0)
         {
             throw runtime_error("You can't delete the root!");
         }
         else
         {
-            delete_tree(leaf);
-        }
-    }
-
-    // help function to remove
-    void Tree::delete_tree(node *leaf)
-    {
-        if(leaf != NULL)
-        {
-            delete_tree(leaf->left);
-            delete_tree(leaf->right);
-            delete leaf;
+            Tree* temp = leaf->kid;
+            if(temp != NULL)
+            {
+                if(temp->father != NULL && temp->father->name == name)
+                {
+                    temp->father=NULL;
+                }
+                else if (temp->mother != NULL && temp->mother->name == name)
+                {
+                    temp->mother=NULL;
+                }
+                delete leaf;
+            }
         }
     }
 };
