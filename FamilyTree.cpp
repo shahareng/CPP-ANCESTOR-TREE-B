@@ -162,7 +162,7 @@ namespace family
         else if(relat.find("great-") == 0)
         {
             size_t found = relat.find("great-");
-            int count=2;
+            int count=3;
             Tree* leaf = this;
             found = relat.find("great-",found+1,6);
             while(found != string::npos)
@@ -182,8 +182,10 @@ namespace family
             else if(relat.find("father") != string::npos)
             {
                 string str = findH(count, this, 0);
+                cout << "str " << str << endl;
                 if (str == "NULL")
                 {
+                    cout << "if- i'm here "<< endl;
                     throw runtime_error("that relation doesn't exist!");
                 }
                 return str;
