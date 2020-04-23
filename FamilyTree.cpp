@@ -85,12 +85,12 @@ namespace family
             count--;
         }
         ans = ans->kid;
-        if(ans->father->name.compare(name) == 0)
+        if(ans->father != NULL && ans->father->name.compare(name) == 0)
         {
             rela+=relation[count-1];
             return rela+="father";
         }
-        else if(ans->mother->name.compare(name) == 0)
+        else if(ans->mother != NULL && ans->mother->name.compare(name) == 0)
         {
             rela+=relation[count-1];
             return rela+="mother";
